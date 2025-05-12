@@ -9,8 +9,10 @@ Ten prosty skrypt PHP tworzy przesyłkę kurierską typu `inpost_courier_c2c` pr
 
 ## Instalacja
 
-1. Sklonuj repozytorium lub pobierz folder `apiinpost`.
+1. Sklonuj repozytorium.
 2. Przejdź do katalogu:
+
+lub skopiuj ./src/create_shipment.php
 
 ```bash
 cd apiinpost
