@@ -1,0 +1,10 @@
+{
+    "require": {
+        "guzzlehttp/guzzle": "^7.9",
+      "ext-json": "*"
+    }
+  ,
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  }
+}

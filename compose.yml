@@ -1,0 +1,37 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    container_name: poc-inpost-php
+    volumes:
+      - ./src:/var/www/html/app
+      - ./php/php.ini-production:/usr/local/etc/php/php.ini:ro
+      - php_socket:/var/run/php
+    env_file:
+      - ./php/.env
+    networks:
+      - poc-inpost-network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: poc-inpost-nginx
+    depends_on:
+      - php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./src:/var/www/html/app
+      - php_socket:/var/run/php
+    networks:
+      - poc-inpost-network
+
+networks:
+  poc-inpost-network:
+    driver: bridge
+
+volumes:
+  php_socket:
