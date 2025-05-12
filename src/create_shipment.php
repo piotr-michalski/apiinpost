@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 
 // === KONFIGURACJA ===
-$apiToken = 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkVzROZW9TeXk0OHpCOHg4emdZX2t5dFNiWHY3blZ0eFVGVFpzWV9TUFA4In0.eyJleHAiOjIwNjI0MDU3ODYsImlhdCI6MTc0NzA0NTc4NiwianRpIjoiNjQ5YWZlNmEtMmZlOC00ZDc1LTgxMzEtY2VlOGI2M2Q5YmEyIiwiaXNzIjoiaHR0cHM6Ly9zYW5kYm94LWxvZ2luLmlucG9zdC5wbC9hdXRoL3JlYWxtcy9leHRlcm5hbCIsInN1YiI6ImY6N2ZiZjQxYmEtYTEzZC00MGQzLTk1ZjYtOThhMmIxYmFlNjdiOnJIV3NYM2Y5RUVRaGFZZ0RETzJrUXROQVpWTFV4VUJ0SFlHMk5nUHNWQnciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzaGlweCIsInNlc3Npb25fc3RhdGUiOiJjM2FiMTY1Yy1lNmNhLTQyMDQtOGM5OS1hOWYxYTYyN2ZkZGQiLCJzY29wZSI6Im9wZW5pZCBhcGk6YXBpcG9pbnRzIGFwaTpzaGlweCIsInNpZCI6ImMzYWIxNjVjLWU2Y2EtNDIwNC04Yzk5LWE5ZjFhNjI3ZmRkZCIsImFsbG93ZWRfcmVmZXJyZXJzIjoiIiwidXVpZCI6ImFmMjM0YzFkLTgzYmUtNDI0OS1hZTRjLTJjNGJiMDZkZDZmYiIsImVtYWlsIjoicGlvdHIubWljaGFsc2tpOUBnbWFpbC5jb20ifQ.cY_CVB-Kf_ICeGOJcgFi-R-vhJXnC_bH52eZUyHsFiv4I1KLtg0J45KQbUuAJuwnsbqA_HGl_UxKLwTB_O5rbuXumKlqbltPn1VZLzUVXmqD35XHeCBY6UBq6D1dxCUZl2CQeti0Xvv7nKpjeaGw8irz5MpwT1Rwa4vjLEpqu5z7WJrXwYs0ajQy8bb0EhM2QnF3Ny6aJOsVp8WqdI0Jinf5v5ry0EP1IlbYySYB9wXIBU2akwYYqGFRqV6sgU284duIBYGxrnYhRQiB0ijdg8o-vwjbi2H92bP9PSfaW-mR2zDk1NqVNu9aOZa3o77HD3t_4drDn5hKJ_FtTSF_Hg'; // Podaj swój Bearer token
+$apiToken = getenv('API_KEY');
 $baseUrl = 'https://sandbox-api-shipx-pl.easypack24.net';
 
 // === UTWÓRZ KLIENTA GUZZLE ===
@@ -86,12 +86,12 @@ $shipmentData = [
 
 // === FUNKCJA DO LOGOWANIA ===
 /**
- * @param string $data
+ * @param string $message
  * @return void
  */
-function logToFile(string $data): void
+function display(string $message): void
 {
-    file_put_contents('log.txt', date('[Y-m-d H:i:s] ').$data.PHP_EOL, FILE_APPEND);
+    echo date('[Y-m-d H:i:s] ').$message.PHP_EOL;
 }
 
 /**
@@ -111,13 +111,13 @@ function waitForShipmentStatusChange(Client $client, int $shipmentId, string $fi
             $response = $client->get('/v1/shipments/'.$shipmentId);
             $data = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $currentStatus = $data['status'] ?? null;
-            logToFile('🔄 Status przesyłki: '.$currentStatus);
+            display('Status przesyłki: '.$currentStatus);
 
             if ($currentStatus && $currentStatus === $finalStatus) {
                 return $currentStatus;
             }
         } catch (Throwable $exception) {
-            logToFile('❌ Błąd podczas sprawdzania statusu: '.$exception->getMessage());
+            display('Błąd podczas sprawdzania statusu: '.$exception->getMessage());
 
             return null;
         }
@@ -148,8 +148,8 @@ try {
     ]);
 
     $body = json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-    logToFile('Utworzono przesyłkę: '.json_encode($body, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
-    echo '✅ Przesyłka utworzona. ID: '.$body['id'].PHP_EOL;
+    display('Utworzono przesyłkę: '.json_encode($body, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+    display('Przesyłka utworzona. ID: '.$body['id']);
 
     // === KROK 3: ZACZEKAJ NA POTWIERDZENIE ===
     $shipmentId = $body['id'];
@@ -179,21 +179,18 @@ try {
     ]);
 
     $orderBody = json_decode($orderResponse->getBody(), true, 512, JSON_THROW_ON_ERROR);
-    logToFile('Zamówiono kuriera: '.json_encode($orderBody, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
-    echo '🚚 Kurier zamówiony'.PHP_EOL;
+    display('Zamówiono kuriera: '.json_encode($orderBody, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+    display('Kurier zamówiony'.PHP_EOL);
 } catch (RequestException $exception) {
     $errorMsg = $exception->hasResponse()
         ? $exception->getResponse()->getBody()->getContents()
         : $exception->getMessage();
 
-    logToFile('❌ RequestException, błąd: '.$errorMsg);
+    display('RequestException, błąd: '.$errorMsg);
 } catch (GuzzleException $exception) {
-    logToFile('❌ GuzzleException, błąd: '.$exception->getMessage());
+    display('GuzzleException, błąd: '.$exception->getMessage());
 } catch (JsonException $exception) {
-    logToFile('❌ JsonException, błąd: '.$exception->getMessage());
+    display('JsonException, błąd: '.$exception->getMessage());
 } catch (RuntimeException $exception) {
-    logToFile('❌ RuntimeException, błąd: '.$exception->getMessage());
-}
-if (isset($exception)) {
-    echo '❌ Wystąpił błąd. Szczegóły zapisano w log.txt'.PHP_EOL;
+    display('RuntimeException, błąd: '.$exception->getMessage());
 }
